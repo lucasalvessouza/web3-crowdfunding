@@ -17,7 +17,7 @@ const CampaignDetail = () => {
                 </div>
             </div>
 
-            <div className="mt-[60px] flex lg:flex-row flex-col gap-5">
+            <div className="mt-[60px] flex lg:flex-row flex-col gap-[40px] md:gap-0 lg:gap-0">
                 <div className="flex-[2] flex flex-col gap-[40px]">
                     <div className="flex flex-col">
                         <span className="font-epilogue font-bold text-[20px] text-white mb-3">CREATOR</span>
@@ -52,11 +52,11 @@ const CampaignDetail = () => {
 
                         </div>
                     </div>
-                    <div className="flex flex-col mt-[30px]">
+                    <div className="flex flex-col">
                         <span className="font-epilogue font-bold text-[20px] text-white">STORY</span>
                         <span className="font-epilogue font-normal text-[14px] text-gray-400">Building a PC</span>
                     </div>
-                    <div className="flex flex-col mt-[30px]">
+                    <div className="flex flex-col">
                         <span className="font-epilogue font-bold text-[20px] text-white">Donators</span>
                         <span className="font-epilogue font-normal text-[14px] text-gray-400">No donators yet. Be the first one!</span>
                     </div>
