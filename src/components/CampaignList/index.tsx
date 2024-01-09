@@ -42,7 +42,7 @@ const CampaignList = () => {
         },
         {
             "title": "RetroRevival Classic Arcade Console",
-            "description": "Relive the golden age of gaming with RetroRevival, a classic arcade console featuring a collection of your favorite retro games. Immerse yourself in nostalgia with this sleek and compact console that brings back the joy of arcade gaming.",
+            "description": "Relive the golden age of gaming with RetroRevival, a classic arcade console featuring a collection of your favorite retro games. Immerse yourself in nostalgia with this console that brings back the joy of arcade gaming.",
             "daysLeft": "25 days",
             "totalRaised": "65 ETH",
             "totalGoal": "80 ETH",
