@@ -47,7 +47,7 @@ const Navbar = () => {
                             </ul>
                         </div>
                     </div>
-                    <div className="flex flex-end gap-3">
+                    <div className="hidden md:flex lg:flex flex-end gap-3">
                         <button
                             className="flex items-center bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                             <FaPlus className="w-3 mr-2"/>
@@ -62,16 +62,25 @@ const Navbar = () => {
             </div>
 
             {toggleMenu &&
-							<div className="sm:hidden" id="mobile-menu">
-								<div className="space-y-1 px-2 pb-3 pt-2">
-									<a href="#" className="text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium">Campaigns</a>
-                        <a href="#"
-                             className="text-gray-300 hover:bg-gray-700 hover:text-white block rounded-md px-3 py-2 text-base font-medium">My
-                            Campaigns</a>
-                        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Connect
-                            Wallet
-                        </button>
-                    </div>
+                <div className="sm:hidden mb-3 transform transition duration-500" id="mobile-menu">
+                    <ul className="space-y-1 px-2 pb-3 pt-2">
+                        <li
+                            className="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">
+                            <Link to={""}>Campaigns</Link>
+                        </li>
+                        <li
+                            className="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">
+                            <Link to={"/my-campaigns"}>My Campaigns</Link>
+                        </li>
+                        <li
+                            className="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">
+                            <Link to={"/my-campaigns"}>Create campaign</Link>
+                        </li>
+                        <li
+                            className="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">
+                            <Link to={"/my-campaigns"}>Connect Wallet</Link>
+                        </li>
+                    </ul>
                 </div>
             }
 
