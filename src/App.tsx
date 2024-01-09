@@ -10,7 +10,7 @@ function App() {
         <div>
             <Navbar/>
 
-            <div className="flex-1 max-sm:w-full max-w-[1280px] mx-auto p-3">
+            <div className="flex-1 max-sm:w-full max-w-[1366px] mx-auto p-3">
                 <Routes>
                     <Route path="/" element={<CampaignList />}/>
                     <Route path="/campaigns/:id" element={<CampaignDetail />}/>

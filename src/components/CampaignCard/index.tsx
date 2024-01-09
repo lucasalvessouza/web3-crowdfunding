@@ -22,7 +22,7 @@ const CampaignCard = (campaign: Campaign) => {
     return (
         <Link to={`/campaigns/1`}>
             <div
-                className="sm:w-[288px] min-w-[301px]  w-full overflow-hidden shadow-lg rounded-[15px] bg-[#1c1c24] cursor-pointer text-white transform transition duration-500 hover:scale-105">
+                className="sm:w-[288px] min-w-[316px]  w-full overflow-hidden shadow-lg rounded-[15px] bg-[#1c1c24] cursor-pointer text-white transform transition duration-500 hover:scale-105">
                 <img className="w-full h-[158px] object-cover" src={image} alt="Sunset in the mountains"/>
                 <div className="px-6 py-4">
                     <div className="font-bold text-xl mb-2">{title}</div>
