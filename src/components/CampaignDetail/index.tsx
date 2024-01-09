@@ -73,8 +73,8 @@ const CampaignDetail = () => {
                                step="0.1"
                         />
                         <div className="p-[20px] bg-[#242424] rounded-2xl">
-                            <p className="text-white font-bold text-justify">🤗 Back it because you believe in it.</p>
-                            <p className="text-gray-400 mt-3">Support the project for no reward. just because it speaks to you.</p>
+                            <p className="text-white font-bold text-justify">🔥 Fuel the Dream.</p>
+                            <p className="text-gray-400 mt-3">Join us in making a meaningful impact! Your generous contribution will fuel the success of our crowdfund project and help bring our shared vision to life. Together, let's turn dreams into reality—click the button below to make a difference today.</p>
                         </div>
                         <button className="bg-purple-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Fund Campaign
