@@ -9,8 +9,20 @@ type CrowdfundingProviderType = {
     disconnectedWallet: () => void,
     walletBalance?: string,
     isWalletLoading: boolean
+    alertMessage?: AlertMessage
+    setAlertMessage: (message: AlertMessage) => void
 }
-export const CrowdfundingContext = createContext<CrowdfundingProviderType>({})
+
+type AlertMessage = {
+    title: string,
+    body: string
+}
+export const CrowdfundingContext = createContext<CrowdfundingProviderType>({
+    connectWallet: () => undefined,
+    disconnectedWallet: () => undefined,
+    setAlertMessage: () => undefined,
+    isWalletLoading: false
+})
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
@@ -23,6 +35,7 @@ const getEthereumContract  = () => {
 export const CrowdfundingProvider = ({ children }: { children: any }) => {
     const [currentAccount, setCurrentAccount] = useState()
     const [walletBalance, setWalletBalance] = useState<string>()
+    const [alertMessage, setAlertMessage] = useState<AlertMessage | undefined>()
     const [isWalletLoading, setIsWalletLoading] = useState(false)
 
     useEffect(() => {
@@ -96,7 +109,9 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         connectWallet,
         disconnectedWallet,
         walletBalance,
-        isWalletLoading
+        isWalletLoading,
+        alertMessage,
+        setAlertMessage
     }
     return (
         <CrowdfundingContext.Provider value={providerData}>

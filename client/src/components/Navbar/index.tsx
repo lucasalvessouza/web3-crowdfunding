@@ -53,7 +53,8 @@ const Navbar = () => {
                     <div className="hidden md:flex lg:flex flex-end gap-3">
                         <Link to="/campaigns/create">
                             <button
-                                className="flex items-center bg-[#1dc071] hover:bg-[#4acc8d] font-epilogue font-semibold text-[16px] leading-[26px] text-white min-h-[52px] px-4 rounded-[10px]">
+                                className="flex items-center bg-[#1dc071] hover:bg-[#4acc8d] font-epilogue font-semibold text-[16px] leading-[26px] text-white min-h-[52px] px-4 rounded-[10px]"
+                            >
                                 <FaPlus className="w-3 mr-2"/>
                                 Create campaign
                             </button>

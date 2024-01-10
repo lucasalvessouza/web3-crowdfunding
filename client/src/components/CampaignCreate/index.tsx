@@ -1,16 +1,28 @@
 import { FaMoneyBill } from 'react-icons/fa'
 import Datepicker, { DateValueType } from "react-tailwindcss-datepicker";
-import {useState} from "react";
+import {useContext, useState} from "react";
+import {CrowdfundingContext} from "../../context/CrowdfundingContext";
 
 const CampaignCreate = () => {
     const [value, setValue] = useState<DateValueType>({
         startDate: new Date(),
         endDate: new Date()
     });
+    const { currentAccount, setAlertMessage } = useContext(CrowdfundingContext)
 
     const handleValueChange = (newValue: DateValueType) => {
         console.log("newValue:", newValue);
         setValue(newValue);
+    }
+
+    const createCampaign = () => {
+        if (!currentAccount) {
+            setAlertMessage({
+                title: 'Ops!',
+                body: 'Connect your wallet to proceed'
+            })
+            return
+        }
     }
 
     return (
@@ -82,7 +94,9 @@ const CampaignCreate = () => {
                     />
                 </div>
                 <button
-                    className="bg-[#1dc071]  hover:bg-[#4acc8d] font-epilogue font-semibold text-[16px] leading-[26px] text-white min-h-[52px] px-4 rounded-[10px]">
+                    className="bg-[#1dc071]  hover:bg-[#4acc8d] font-epilogue font-semibold text-[16px] leading-[26px] text-white min-h-[52px] px-4 rounded-[10px]"
+                    onClick={createCampaign}
+                >
                     Create campaign
                 </button>
             </div>

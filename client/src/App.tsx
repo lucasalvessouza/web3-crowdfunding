@@ -3,13 +3,14 @@ import {Route, Routes} from "react-router-dom";
 import CampaignList from "./components/CampaignList";
 import CampaignDetail from "./components/CampaignDetail";
 import CampaignCreate from "./components/CampaignCreate";
+import Alert from "./components/Alert";
 
 function App() {
   return (
     <>
         <div>
             <Navbar />
-
+            <Alert />
             <div className="flex-1 max-sm:w-full max-w-[1366px] mx-auto p-3">
                 <Routes>
                     <Route path="/" element={<CampaignList />}/>
