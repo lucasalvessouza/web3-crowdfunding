@@ -1,11 +1,14 @@
 import logo from '../../assets/react.svg'
 import { FaPlus } from 'react-icons/fa'
-import { useState } from "react";
+import { PiPlugsConnectedFill } from "react-icons/pi";
+import {useContext, useState} from "react";
 import { Link } from "react-router-dom"
+import { CrowdfundingContext } from "../../context/CrowdfundingContext";
+import Loader from "../Loader";
 
 const Navbar = () => {
     const [toggleMenu, setToggleMenu] = useState<boolean>(false)
-
+    const { connectWallet, disconnectedWallet, currentAccount, isWalletLoading, walletBalance } = useContext(CrowdfundingContext)
     return (
         <nav className="bg-gray-800 py-2">
             <div className="mx-auto px-2 sm:px-6 lg:px-8">
@@ -55,9 +58,13 @@ const Navbar = () => {
                                 Create campaign
                             </button>
                         </Link>
+                        {currentAccount && <div className="flex items-center font-epilogue bg-blue-600 font-semibold text-[16px] leading-[26px] text-white min-h-[52px] px-4 rounded-[10px]">ETH: {walletBalance}</div>}
                         <button
-                            className="flex items-center bg-blue-600 hover:bg-[#3a72ba] font-epilogue font-semibold text-[16px] leading-[26px] text-white min-h-[52px] px-4 rounded-[10px]">Connect
-                            Wallet
+                            onClick={currentAccount? disconnectedWallet : connectWallet}
+                            className={`flex items-center ${!currentAccount ? 'bg-blue-600 hover:bg-[#3a72ba]' : 'bg-purple-600 hover:bg-purple-400'} font-epilogue font-semibold text-[16px] leading-[26px] text-white min-h-[52px] px-4 rounded-[10px]`}>
+                            {isWalletLoading && <Loader style={"mr-3"}/>}
+                            {currentAccount && <PiPlugsConnectedFill className="w-[30px]" />}
+                            {currentAccount ? 'Disconnect Wallet' : 'Connect Wallet'}
                         </button>
                     </div>
                 </div>
