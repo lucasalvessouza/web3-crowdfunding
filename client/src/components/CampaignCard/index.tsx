@@ -1,29 +1,37 @@
 import {Link} from "react-router-dom";
+import {CampaignType} from "../../context/CrowdfundingContext";
+import {shortenAddress} from "../../utils";
+import {useEffect, useState} from "react";
+import moment from "moment";
 
-type Campaign = {
-    title: string,
-    description: string,
-    daysLeft: string,
-    totalRaised: string,
-    totalGoal: string,
-    category: string,
-    image: string
-}
-const CampaignCard = (campaign: Campaign) => {
+const CampaignCard = (campaign: CampaignType) => {
     const {
+        owner,
         title,
         description,
-        daysLeft,
-        totalRaised,
-        totalGoal,
-        category,
-        image
+        target,
+        deadline,
+        image: projectImage,
+        amountCollected
     } = campaign
+
+    const [image, setImage] = useState(projectImage)
+    const defaultImage = "https://www.sec.gov/files/crowdfunding-v5b-2016.jpg"
+    useEffect(() => {
+        fetch(campaign.image)
+            .then((response) => {
+                if (!response.ok) setImage(defaultImage)
+            })
+            .catch(() => setImage(defaultImage))
+    }, [campaign.image]);
+
+    const category = "gamer"
+    const daysLeft = moment(deadline).diff(moment(), 'days')
     return (
         <Link to={`/campaigns/1`}>
             <div
                 className="sm:w-[288px] min-w-[316px]  w-full overflow-hidden shadow-lg rounded-[15px] bg-[#1c1c24] cursor-pointer text-white transform transition duration-500 hover:scale-105">
-                <img className="w-full h-[158px] object-cover" src={image} alt="Sunset in the mountains"/>
+                <img className="w-full h-[158px] object-cover" src={image} alt="Project image"/>
                 <div className="px-6 py-4">
                     <div className="font-bold text-xl mb-2">{title}</div>
                     <p className="text-[#808191] text-base text-justify">
@@ -32,14 +40,13 @@ const CampaignCard = (campaign: Campaign) => {
                 </div>
                 <div className="flex px-6 py-4 justify-between">
                     <div className="flex flex-col">
-                        <span className="font-bold">{totalRaised}</span>
-                        <span className="font-medium text-[#808191]">Raised of {totalGoal}</span>
+                        <span className="font-bold">{amountCollected || 0}</span>
+                        <span className="font-medium text-[#808191]">Raised of {target}</span>
                     </div>
                     <div className="flex flex-col text-right">
-                        <span className="font-bold">{daysLeft}</span>
+                        <span className="font-bold">{daysLeft.toString()}</span>
                         <span className="font-medium text-[#808191]">Days Left</span>
                     </div>
-
                 </div>
                 <div className="px-6 py-4">
                 <span
@@ -66,7 +73,7 @@ const CampaignCard = (campaign: Campaign) => {
                                 </g>
                             </g>
                         </svg>
-                        <span className="text-[#808191] text-base text-justify ml-2">by <b>0xC6223A6544A8...</b></span>
+                        <span className="text-[#808191] text-base text-justify ml-2">by <b>{shortenAddress(owner)}</b></span>
                     </div>
                 </div>
             </div>
