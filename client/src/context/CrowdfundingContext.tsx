@@ -1,8 +1,17 @@
 import { ethers } from "ethers"
 import { createContext, useEffect, useState } from "react"
+import {
+    useAddress,
+    useContract,
+    useContractWrite,
+    useConnect,
+    metamaskWallet,
+    useDisconnect, useBalance
+} from '@thirdweb-dev/react';
 import { contractABI, contractAddress } from "../utils/constants"
 import useEthAmountParser from "../hooks/useEthAmountParser";
 import useTimestampParser from "../hooks/useTimestampParser";
+import {WalletInstance} from "@thirdweb-dev/react-core/dist/declarations/src/core/types/wallet";
 
 type CrowdfundingProviderType = {
     currentAccount?: string
@@ -14,8 +23,8 @@ type CrowdfundingProviderType = {
     isLoading: boolean
     alertMessage?: AlertMessage
     setAlertMessage: (message: AlertMessage) => void,
-    userCampaignsList: CampaignType[]
-    campaignsList: CampaignType[]
+    userCampaignsList: CampaignType[] | []
+    campaignsList: CampaignType[] | []
     loadingPageMessage?: string
 }
 
@@ -37,6 +46,7 @@ export type CampaignType = CampaignCreateType & {
     amountCollected: any
     donators: string[]
     donations: any[]
+    status: string
 }
 
 export const CrowdfundingContext = createContext<CrowdfundingProviderType>({
@@ -51,16 +61,17 @@ export const CrowdfundingContext = createContext<CrowdfundingProviderType>({
     loadingPageMessage: undefined
 })
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-const { ethereum } = window;
-const getEthereumContract  = () => {
-    const provider = new ethers.providers.Web3Provider(ethereum)
-    const signer = provider.getSigner()
-    return new ethers.Contract(contractAddress, contractABI, signer)
-}
 export const CrowdfundingProvider = ({ children }: { children: any }) => {
-    const [currentAccount, setCurrentAccount] = useState()
+    const { contract } = useContract(contractAddress, contractABI);
+    const { mutateAsync: createCampaign } = useContractWrite(contract, 'createCampaign');
+    const { mutateAsync: getCampaigns } = useContractWrite(contract, 'getCampaigns');
+
+    const connect = useConnect();
+    const disconnect = useDisconnect()
+    const currentAccount = useAddress();
+    const balance = useBalance()
+
+    const [currentWallet, setCurrentWallet] = useState<WalletInstance>()
     const [walletBalance, setWalletBalance] = useState<string>()
     const [alertMessage, setAlertMessage] = useState<AlertMessage | undefined>()
     const [isWalletLoading, setIsWalletLoading] = useState(false)
@@ -70,48 +81,22 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
     const [campaignsList, setCampaignsList] = useState<CampaignType[] | []>()
 
     useEffect(() => {
-        checkIfWalletIsConnected()
-    }, []);
-
-    useEffect(() => {
-        getWalletBalance()
-        getAllProjects()
     }, [currentAccount]);
 
-    const checkIfWalletIsConnected = async () => {
-        try {
-            if (!ethereum) {
-                return alert('Please install metamask!')
-            }
+    useEffect(() => {
+        getAllProjects()
+        getUserProjects()
+    }, [contract]);
 
-            const accounts = await ethereum.request({ method: 'eth_accounts' })
-            if (!accounts.length) {
-                console.log("No accounts found")
-                return
-            }
-            setCurrentAccount(accounts[0])
-        } catch (error) {
-            console.log(error)
-            throw new Error("No ethereum object")
-        }
-    }
-    const getWalletBalance = async () => {
-        if (!currentAccount) {
-            return
-        }
-        const balance = await ethereum.request({ method: 'eth_getBalance', params: [currentAccount] })
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        setWalletBalance(useEthAmountParser(balance, 4))
-    }
+    useEffect(() => {
+        setWalletBalance(balance.data?.displayValue)
+    }, [balance]);
 
     const connectWallet = async () => {
         try {
-            if(!ethereum) {
-                return alert('Please install metamask!')
-            }
             setIsWalletLoading(true)
-            const accounts = await ethereum.request({ method: 'eth_requestAccounts' })
-            setCurrentAccount(accounts[0])
+            const wallet = await connect(metamaskWallet())
+            setCurrentWallet(wallet)
         } catch (error) {
             console.log(error)
             throw new Error("No ethereum object")
@@ -121,19 +106,11 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
     }
 
     const disconnectedWallet = async () => {
-        if(!ethereum) {
-            return alert('Please install metamask!')
+        if (!currentWallet) {
+            return
         }
-        await ethereum.request({
-            "method": "wallet_revokePermissions",
-            "params": [
-                {
-                    "eth_accounts": {}
-                }
-            ]
-        })
-        setCurrentAccount(undefined)
-        setWalletBalance('-')
+        console.log("Disconnecting...")
+        disconnect().then(() =>  console.log('Disconnected')).catch(() =>  console.log('Error to disconnect'))
     }
 
     const createCrowdfundingProject = async (data: CampaignCreateType) => {
@@ -146,29 +123,22 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
             image
         } = data
         try {
-            if(!ethereum) {
-                return alert('Please install metamask!')
-            }
-
             setLoadingPageMessage("Your project is being created!")
-            const crowdfundingContract = getEthereumContract()
 
             const targetParsed = ethers.utils.parseEther(target)
-
-            const transactionHash = await crowdfundingContract.createCampaign(
-                owner,
-                title,
-                description,
-                targetParsed,
-                Date.parse(deadline),
-                image
-            )
-
             setIsLoading(true)
-            console.log(`Loading - ${transactionHash.hash}`)
-            await transactionHash.wait()
+            const data = await createCampaign({
+                args: [
+                    owner,
+                    title,
+                    description,
+                    targetParsed,
+                    Date.parse(deadline),
+                    image
+                ]
+            })
+            console.log("contract call success", data)
             setIsLoading(false)
-            console.log(`Success = ${transactionHash.hash}`)
             getAllProjects()
         } catch (error) {
             console.log(error)
@@ -178,30 +148,49 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         }
     }
 
+    const formatCampaign = (campaign: CampaignType) => ({
+        owner: campaign.owner,
+        title: campaign.title,
+        description: campaign.description,
+        target: useEthAmountParser(campaign.target._hex, 4),
+        amountCollected: useEthAmountParser(campaign.amountCollected._hex, 4),
+        deadline: useTimestampParser(campaign.deadline._hex),
+        image: campaign.image,
+        status: campaign.status
+    })
+
     const getAllProjects = async () => {
         try {
-            if(!ethereum) {
-                return alert('Please install metamask!')
+            if (!contract) {
+                return
             }
-            if (!currentAccount) {
+            const campaigns = await getCampaigns({});
+            const campaignsFormatted = campaigns.map(formatCampaign)
+            setCampaignsList(campaignsFormatted)
+        } catch (error) {
+            console.log(error)
+            throw new Error("No ethereum object")
+        } finally {
+            setLoadingPageMessage(undefined)
+        }
+    }
+
+    const getUserProjects = async () => {
+        try {
+            if (!contract || !currentAccount) {
                 setCampaignsList([])
                 setUserCampaignsList([])
                 return
             }
 
-            const crowdfundingContract = getEthereumContract()
-            const campaigns = await crowdfundingContract.getCampaigns()
-            const campaignsFormatted = campaigns.map((campaign: CampaignType) => ({
-                owner: campaign.owner,
-                title: campaign.title,
-                description: campaign.description,
-                target: useEthAmountParser(campaign.target._hex, 4),
-                amountCollected: useEthAmountParser(campaign.amountCollected._hex, 4),
-                deadline: useTimestampParser(campaign.deadline._hex),
-                image: campaign.image
-            }))
-            setCampaignsList(campaignsFormatted)
-            setUserCampaignsList(campaignsFormatted.filter((campaign: CampaignType) => campaign.owner.toUpperCase() === currentAccount.toUpperCase()))
+            const campaigns = await getCampaigns({});
+            if (!campaigns) {
+                return
+            }
+            const campaignsFormatted = campaigns.map(formatCampaign)
+            setUserCampaignsList(
+              campaignsFormatted.filter((campaign: CampaignType) => campaign.owner.toUpperCase() === currentAccount.toUpperCase())
+            )
         } catch (error) {
             console.log(error)
             throw new Error("No ethereum object")
