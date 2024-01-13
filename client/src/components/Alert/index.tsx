@@ -4,6 +4,7 @@ import {CrowdfundingContext} from "../../context/CrowdfundingContext";
 const Alert = () => {
     const { alertMessage} = useContext(CrowdfundingContext)
     const [isOpen, setIsOpen] = useState(false)
+    const [color, setColor] = useState('green')
     useEffect(() => {
         if (alertMessage) {
             setIsOpen(true)
@@ -13,10 +14,14 @@ const Alert = () => {
 
     const close = () => setIsOpen(false)
 
+    useEffect(() => {
+        setColor(alertMessage?.type === "success" ? "green" : "red")
+    }, [alertMessage]);
+
     return (
         <>
             {isOpen &&
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <div className={`bg-${color}-100 border border-${color}-400 text-${color}-700 px-4 py-3 rounded fixed w-[40%] left-[60%]`} role="alert">
                 <strong className="font-bold mr-2">{alertMessage?.title}</strong>
                 <span className="block sm:inline">{alertMessage?.body}</span>
                 <span className="absolute top-0 bottom-0 right-0 px-4 py-3" onClick={close}>

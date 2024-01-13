@@ -25,12 +25,15 @@ type CrowdfundingProviderType = {
     setAlertMessage: (message: AlertMessage) => void,
     userCampaignsList: CampaignType[] | []
     campaignsList: CampaignType[] | []
-    loadingPageMessage?: string
+    loadingPageMessage?: string,
+    isProjectCreated: boolean,
+    setIsProjectCreated: (value: boolean) => void
 }
 
 type AlertMessage = {
     title: string,
-    body: string
+    body: string,
+    type: 'success' | 'error'
 }
 
 export type CampaignCreateType = {
@@ -43,10 +46,11 @@ export type CampaignCreateType = {
 }
 
 export type CampaignType = CampaignCreateType & {
-    amountCollected: any
+    amountCollected: unknown
     donators: string[]
-    donations: any[]
+    donations: unknown[]
     status: string
+    target: unknown
 }
 
 export const CrowdfundingContext = createContext<CrowdfundingProviderType>({
@@ -58,7 +62,9 @@ export const CrowdfundingContext = createContext<CrowdfundingProviderType>({
     isLoading: false,
     userCampaignsList: [],
     campaignsList: [],
-    loadingPageMessage: undefined
+    loadingPageMessage: undefined,
+    setIsProjectCreated: () => undefined,
+    isProjectCreated: false
 })
 
 export const CrowdfundingProvider = ({ children }: { children: any }) => {
@@ -77,6 +83,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
     const [isWalletLoading, setIsWalletLoading] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [loadingPageMessage, setLoadingPageMessage] = useState<string | undefined>()
+    const [isProjectCreated, setIsProjectCreated] = useState(false)
     const [userCampaignsList, setUserCampaignsList] = useState<CampaignType[] | []>()
     const [campaignsList, setCampaignsList] = useState<CampaignType[] | []>()
 
@@ -106,7 +113,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
     }
 
     const disconnectedWallet = async () => {
-        if (!currentWallet) {
+        if (!currentAccount) {
             return
         }
         console.log("Disconnecting...")
@@ -124,7 +131,6 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         } = data
         try {
             setLoadingPageMessage("Your project is being created!")
-
             const targetParsed = ethers.utils.parseEther(target)
             setIsLoading(true)
             const data = await createCampaign({
@@ -139,6 +145,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
             })
             console.log("contract call success", data)
             setIsLoading(false)
+            setIsProjectCreated(true)
             getAllProjects()
         } catch (error) {
             console.log(error)
@@ -164,6 +171,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
             if (!contract) {
                 return
             }
+            setIsLoading(true)
             const campaigns = await getCampaigns({});
             const campaignsFormatted = campaigns.map(formatCampaign)
             setCampaignsList(campaignsFormatted)
@@ -171,7 +179,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
             console.log(error)
             throw new Error("No ethereum object")
         } finally {
-            setLoadingPageMessage(undefined)
+            setIsLoading(false)
         }
     }
 
@@ -212,7 +220,9 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         createCrowdfundingProject,
         userCampaignsList,
         campaignsList,
-        loadingPageMessage
+        loadingPageMessage,
+        setIsProjectCreated,
+        isProjectCreated
     }
     return (
         <CrowdfundingContext.Provider value={providerData}>
