@@ -1,6 +1,7 @@
 import CampaignCard from "../CampaignCard";
 import {useContext, useEffect, useState} from "react";
 import {CrowdfundingContext} from "../../context/CrowdfundingContext";
+import Loader from "../Loader";
 
 
 const CampaignList = () => {
@@ -51,7 +52,7 @@ const CampaignList = () => {
     //         image: "https://images.unsplash.com/photo-1511882150382-421056c89033?q=80&w=1471&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
     //     }
     // ]
-    const { campaignsList } = useContext(CrowdfundingContext)
+    const { campaignsList, isLoading } = useContext(CrowdfundingContext)
 
     const [search, setSearch] = useState("")
     const [campaigns, setCampaigns] = useState(campaignsList)
@@ -83,7 +84,8 @@ const CampaignList = () => {
                     <CampaignCard {...campaign} />
                 ))}
             </div>
-            {campaigns?.length === 0 &&
+            {isLoading && <div className="flex justify-center items-center"><Loader /></div>}
+            {!isLoading && campaigns?.length === 0 &&
               <div className="font-epilogue font-medium text-[16px] text-white text-center">
                 <p>Oops! No matching projects found. Try adjusting your filters!</p>
                 <button

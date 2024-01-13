@@ -1,10 +1,11 @@
 import CampaignCard from "../CampaignCard";
 import {useContext} from "react";
 import { CrowdfundingContext } from "../../context/CrowdfundingContext";
+import Loader from "../Loader";
 
 
 const MyCampaigns = () => {
-    const { userCampaignsList } = useContext(CrowdfundingContext)
+    const { userCampaignsList, isLoading, currentAccount } = useContext(CrowdfundingContext)
 
     return (
         <>
@@ -14,14 +15,14 @@ const MyCampaigns = () => {
                     <CampaignCard {...campaign} />
                 ))}
             </div>
-            {/*{userCampaignsList.length === 0 &&*/}
-			{/*				<div className="font-epilogue font-medium text-[16px] text-white text-center">*/}
-			{/*					<p>Oops! No matching projects found. Try adjusting your filters!</p>*/}
-			{/*					<button*/}
-			{/*						className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-3"*/}
-			{/*						onClick={() => setCampaigns(initialCampaigns)}*/}
-			{/*					>Show me all!</button>*/}
-			{/*				</div>}*/}
+            {!userCampaignsList?.length &&
+						<div className="font-epilogue font-medium text-[16px] text-white flex justify-center items-center">
+              {currentAccount ?
+                <p>No projects yet? No worries! The adventure begins when you hit 'Create Campaign' Ready, set, go!</p>
+                :
+                <p>Connect your wallet first to show yours projects.</p>}
+						</div>}
+          {isLoading && <div className="flex justify-center items-center"><Loader/></div>}
         </>
     )
 }
