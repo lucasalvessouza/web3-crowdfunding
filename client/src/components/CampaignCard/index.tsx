@@ -17,13 +17,13 @@ const CampaignCard = (campaign: CampaignType) => {
 
     const [image, setImage] = useState(projectImage)
     const defaultImage = "https://www.sec.gov/files/crowdfunding-v5b-2016.jpg"
-    useEffect(() => {
-        fetch(campaign.image)
-            .then((response) => {
-                if (!response.ok) setImage(defaultImage)
-            })
-            .catch(() => setImage(defaultImage))
-    }, [campaign.image]);
+    // useEffect(() => {
+    //     fetch(campaign.image)
+    //         .then((response) => {
+    //             if (!response.ok) setImage(defaultImage)
+    //         })
+    //         .catch(() => setImage(defaultImage))
+    // }, [campaign.image]);
 
     const category = "gamer"
     const daysLeft = moment(deadline).diff(moment(), 'days')
