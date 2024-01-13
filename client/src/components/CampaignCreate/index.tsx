@@ -1,24 +1,56 @@
 import { FaMoneyBill } from 'react-icons/fa'
 import Datepicker, { DateValueType } from "react-tailwindcss-datepicker";
-import {useContext, useState} from "react";
-import {CrowdfundingContext, CampaignCreateType } from "../../context/CrowdfundingContext";
+import {useContext, useEffect, useState} from "react";
+import { CrowdfundingContext } from "../../context/CrowdfundingContext";
+import {useFormik} from "formik";
+import * as yup from "yup"
 
 const CampaignCreate = () => {
     const [value, setValue] = useState<DateValueType>({
         startDate: new Date(),
         endDate: new Date()
     });
-    const { currentAccount, setAlertMessage, createCrowdfundingProject } = useContext(CrowdfundingContext)
-    const [formData, setFormData] = useState<CampaignCreateType>({
-        owner: "",
-        title: "",
-        description: "",
-        target: "",
-        deadline: "",
-        image: "",
+    const { currentAccount, createCrowdfundingProject, setIsProjectCreated, isProjectCreated, setAlertMessage } = useContext(CrowdfundingContext)
+
+    const formSchema = yup.object().shape({
+        title: yup.string().required(),
+        description: yup.string().required(),
+        target: yup.string().required(),
+        deadline: yup.string().required(),
+        image: yup.string().required(),
+    })
+    const formik = useFormik({
+        validationSchema: formSchema,
+        initialValues: {
+            owner: "",
+            title: "",
+            description: "",
+            target: "",
+            deadline: "",
+            image: "",
+        },
+        onSubmit: values => {
+            createCrowdfundingProject({
+                ...values,
+                owner: currentAccount as string,
+                target: values.target.toString()
+            })
+        }
     })
 
-    const handleValueChange = (newValue: DateValueType) => {
+    useEffect(() => {
+        setAlertMessage({
+            title: '🎉 Project Created!',
+            body: 'You did it! 🎉 Your crowdfunding project is now live and ready for action. ',
+            type: 'success'
+        })
+    }, [isProjectCreated]);
+
+    useEffect(() => {
+        setIsProjectCreated(false)
+    }, []);
+
+    const handleDatepickerChange = (newValue: DateValueType) => {
        if (!newValue?.startDate) {
           return
        }
@@ -26,40 +58,13 @@ const CampaignCreate = () => {
            startDate: newValue.startDate,
            endDate: newValue.startDate
        })
-       setFormData({
-           ...formData,
-           deadline: newValue.startDate as string
-       })
+       formik.setFieldValue('deadline', newValue.startDate)
     }
-
-    const createCampaign = () => {
-        if (!currentAccount) {
-            setAlertMessage({
-                title: 'Ops!',
-                body: 'Connect your wallet to proceed'
-            })
-            return
-        }
-        createCrowdfundingProject({
-            ...formData,
-            owner: currentAccount,
-        })
-    }
-
-    const onChange = (event: any) => setFormData({...formData, [event.target.id]: event.target.value})
 
     return (
         <>
             <h1 className="font-epilogue font-semibold text-[18px] text-white text-left mb-4">Create a campaign</h1>
-            <div className="flex flex-col gap-5">
-                <div>
-                    <label htmlFor="user_name"
-                           className="block mb-2 text-sm font-bold text-gray-900 dark:text-white">Your Name *</label>
-                    <input type="text" id="user_name"
-                           className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                           placeholder="John Doe" required
-                    />
-                </div>
+            <form className="flex flex-col gap-5" onSubmit={formik.handleSubmit}>
                 <div>
                     <label htmlFor="title"
                            className="block mb-2 text-sm font-bold text-gray-900 dark:text-white">Campaign Title *</label>
@@ -69,7 +74,8 @@ const CampaignCreate = () => {
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                         placeholder="Write a title"
                         required
-                        onChange={onChange}
+                        onChange={formik.handleChange}
+                        value={formik.values.title}
                     />
                 </div>
                 <div>
@@ -81,7 +87,8 @@ const CampaignCreate = () => {
                         placeholder="Write a story (max of 235 characters)"
                         maxLength={235}
                         required
-                        onChange={onChange}
+                        onChange={formik.handleChange}
+                        value={formik.values.description}
                     />
                 </div>
 
@@ -102,7 +109,8 @@ const CampaignCreate = () => {
                         defaultValue={0.1}
                         type="number"
                         step="0.1"
-                        onChange={onChange}
+                        onChange={formik.handleChange}
+                        value={formik.values.target}
                     />
                 </div>
                 <div>
@@ -114,7 +122,7 @@ const CampaignCreate = () => {
                             <Datepicker
                                 asSingle={true}
                                 value={value}
-                                onChange={handleValueChange}
+                                onChange={handleDatepickerChange}
                             />
                         </div>
                     </div>
@@ -129,16 +137,17 @@ const CampaignCreate = () => {
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                         placeholder="Place a image url of your campaign"
                         required
-                        onChange={onChange}
+                        onChange={formik.handleChange}
+                        value={formik.values.image}
                     />
                 </div>
                 <button
                     className="bg-[#1dc071]  hover:bg-[#4acc8d] font-epilogue font-semibold text-[16px] leading-[26px] text-white min-h-[52px] px-4 rounded-[10px]"
-                    onClick={createCampaign}
+                    type="submit"
                 >
                     Create campaign
                 </button>
-            </div>
+            </form>
         </>
     )
 }
