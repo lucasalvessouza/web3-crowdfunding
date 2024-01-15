@@ -4,6 +4,16 @@ pragma solidity ^0.8.0;
 //import "@thirdweb-dev/contracts/base/ERC721Base.sol";
 
 contract Contract {
+    enum Statuses { ACTIVE, DEACTIVATED, EXPIRED }
+    address owner;
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    modifier ownerOnly {
+        require(msg.sender == owner);
+        _;
+    }
 
     struct Campaign {
         address owner;
@@ -15,7 +25,8 @@ contract Contract {
         string image;
         address[] donators;
         uint256[] donations;
-        string status;
+        Statuses status;
+        string statusName;
     }
 
     mapping(uint256 => Campaign) public campaigns;
@@ -34,7 +45,8 @@ contract Contract {
         campaign.deadline = _deadline;
         campaign.amountCollected = 0;
         campaign.image = _image;
-        campaign.status = "ACTIVE";
+        campaign.status = Statuses.ACTIVE;
+        campaign.statusName = "ACTIVE";
 
         numberOfCampaigns++;
 
@@ -56,6 +68,12 @@ contract Contract {
         }
     }
 
+    function updateCampaignStatus(uint256 _id, Statuses status) ownerOnly public {
+        Campaign storage campaign = campaigns[_id];
+        campaign.status = status;
+        campaign.statusName = getStatusKey(status);
+    }
+
     function getDonators(uint256 _id) view public returns (address[] memory, uint256[] memory) {
         return (campaigns[_id].donators, campaigns[_id].donations);
     }
@@ -65,11 +83,21 @@ contract Contract {
 
         for(uint i = 0; i < numberOfCampaigns; i++) {
             Campaign storage item = campaigns[i];
-
             allCampaigns[i] = item;
         }
 
         return allCampaigns;
+    }
+
+    function getCampaign(uint256 _id) public view returns (Campaign memory) {
+        return campaigns[_id];
+    }
+
+    function getStatusKey(Statuses status) public pure returns (string memory) {
+        if (Statuses.ACTIVE == status) return "ACTIVE";
+        if (Statuses.DEACTIVATED == status) return "DEACTIVATED";
+        if (Statuses.EXPIRED == status) return "EXPIRED";
+        return "";
     }
 
 }
