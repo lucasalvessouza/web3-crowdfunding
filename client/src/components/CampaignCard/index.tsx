@@ -1,34 +1,24 @@
 import {Link} from "react-router-dom";
 import {CampaignType} from "../../context/CrowdfundingContext";
 import {shortenAddress} from "../../utils";
-import {useEffect, useState} from "react";
 import moment from "moment";
 
 const CampaignCard = (campaign: CampaignType) => {
     const {
-        owner,
-        title,
-        description,
-        target,
-        deadline,
-        image: projectImage,
-        amountCollected
+      owner,
+      title,
+      description,
+      target,
+      deadline,
+      image,
+      amountCollected,
+      id
     } = campaign
-
-    const [image, setImage] = useState(projectImage)
-    const defaultImage = "https://www.sec.gov/files/crowdfunding-v5b-2016.jpg"
-    // useEffect(() => {
-    //     fetch(campaign.image)
-    //         .then((response) => {
-    //             if (!response.ok) setImage(defaultImage)
-    //         })
-    //         .catch(() => setImage(defaultImage))
-    // }, [campaign.image]);
 
     const category = "gamer"
     const daysLeft = moment(deadline).diff(moment(), 'days')
     return (
-        <Link to={`/campaigns/1`}>
+        <Link to={`/campaigns/${id}`}>
             <div
                 className="sm:w-[288px] min-w-[316px]  w-full overflow-hidden shadow-lg rounded-[15px] bg-[#1c1c24] cursor-pointer text-white transform transition duration-500 hover:scale-105">
                 <img className="w-full h-[158px] object-cover" src={image} alt="Project image"/>

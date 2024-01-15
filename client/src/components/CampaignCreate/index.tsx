@@ -4,12 +4,14 @@ import {useContext, useEffect, useState} from "react";
 import { CrowdfundingContext } from "../../context/CrowdfundingContext";
 import {useFormik} from "formik";
 import * as yup from "yup"
+import {useNavigate} from "react-router-dom";
 
 const CampaignCreate = () => {
     const [value, setValue] = useState<DateValueType>({
         startDate: new Date(),
         endDate: new Date()
     });
+    const navigate = useNavigate()
     const { currentAccount, createCrowdfundingProject, setIsProjectCreated, isProjectCreated, setAlertMessage } = useContext(CrowdfundingContext)
 
     const formSchema = yup.object().shape({
@@ -39,11 +41,14 @@ const CampaignCreate = () => {
     })
 
     useEffect(() => {
-        setAlertMessage({
-            title: '🎉 Project Created!',
-            body: 'You did it! 🎉 Your crowdfunding project is now live and ready for action. ',
-            type: 'success'
-        })
+       if (isProjectCreated) {
+           setAlertMessage({
+               title: '🎉 Project Created!',
+               body: 'You did it! 🎉 Your crowdfunding project is now live and ready for action. ',
+               type: 'success'
+           })
+           navigate("/my-campaigns");
+       }
     }, [isProjectCreated]);
 
     useEffect(() => {

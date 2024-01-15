@@ -27,7 +27,9 @@ type CrowdfundingProviderType = {
     campaignsList: CampaignType[] | []
     loadingPageMessage?: string,
     isProjectCreated: boolean,
-    setIsProjectCreated: (value: boolean) => void
+    setIsProjectCreated: (value: boolean) => void,
+    getProject: (id: string) => CampaignType | undefined,
+    contract: any
 }
 
 type AlertMessage = {
@@ -46,6 +48,7 @@ export type CampaignCreateType = {
 }
 
 export type CampaignType = CampaignCreateType & {
+    id: string
     amountCollected: unknown
     donators: string[]
     donations: unknown[]
@@ -64,13 +67,16 @@ export const CrowdfundingContext = createContext<CrowdfundingProviderType>({
     campaignsList: [],
     loadingPageMessage: undefined,
     setIsProjectCreated: () => undefined,
-    isProjectCreated: false
+    isProjectCreated: false,
+    getProject: () => undefined,
+    contract: undefined
 })
 
 export const CrowdfundingProvider = ({ children }: { children: any }) => {
     const { contract } = useContract(contractAddress, contractABI);
     const { mutateAsync: createCampaign } = useContractWrite(contract, 'createCampaign');
     const { mutateAsync: getCampaigns } = useContractWrite(contract, 'getCampaigns');
+    const { mutateAsync: getCampaign } = useContractWrite(contract, 'getCampaign');
 
     const connect = useConnect();
     const disconnect = useDisconnect()
@@ -147,6 +153,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
             setIsLoading(false)
             setIsProjectCreated(true)
             getAllProjects()
+            getUserProjects()
         } catch (error) {
             console.log(error)
             throw new Error("No ethereum object")
@@ -155,7 +162,8 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         }
     }
 
-    const formatCampaign = (campaign: CampaignType) => ({
+    const formatCampaign = (campaign: CampaignType, index) => ({
+        id: index,
         owner: campaign.owner,
         title: campaign.title,
         description: campaign.description,
@@ -207,6 +215,26 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         }
     }
 
+    const getProject = async (id: string): Promise<CampaignType | undefined> => {
+        try {
+            if (!contract || !currentAccount) {
+                return
+            }
+            const campaign = await getCampaign({
+                args: [id]
+            });
+            if (!campaign) {
+                return
+            }
+            const [campaignFormatted] = [campaign].map(formatCampaign)
+            return campaignFormatted
+        } catch (error) {
+            console.log(error)
+            throw new Error("No campaign")
+        } finally {
+            setLoadingPageMessage(undefined)
+        }
+    }
 
     const providerData = {
         currentAccount,
@@ -222,7 +250,9 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         campaignsList,
         loadingPageMessage,
         setIsProjectCreated,
-        isProjectCreated
+        isProjectCreated,
+        getProject,
+        contract
     }
     return (
         <CrowdfundingContext.Provider value={providerData}>
