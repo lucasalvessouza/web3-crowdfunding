@@ -61,11 +61,7 @@ contract Contract {
         campaign.donators.push(msg.sender);
         campaign.donations.push(amount);
 
-        (bool sent,) = payable(campaign.owner).call{value: amount}("");
-
-        if(sent) {
-            campaign.amountCollected = campaign.amountCollected + amount;
-        }
+        campaign.amountCollected = campaign.amountCollected + amount;
     }
 
     function updateCampaignStatus(uint256 _id, Statuses status) ownerOnly public {
