@@ -12,7 +12,8 @@ const CampaignCard = (campaign: CampaignType) => {
       deadline,
       image,
       amountCollected,
-      id
+      id,
+      statusName
     } = campaign
 
     const category = "gamer"
@@ -39,8 +40,8 @@ const CampaignCard = (campaign: CampaignType) => {
                     </div>
                 </div>
                 <div className="px-6 py-4">
-                <span
-                    className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">#{category}</span>
+                    <span
+                      className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">#{category}</span>
 
                     <div className="flex mt-3 items-center">
                         <svg viewBox="0 0 36 36" fill="none" role="img" xmlns="http://www.w3.org/2000/svg" width="25"
@@ -63,7 +64,11 @@ const CampaignCard = (campaign: CampaignType) => {
                                 </g>
                             </g>
                         </svg>
-                        <span className="text-[#808191] text-base text-justify ml-2">by <b>{shortenAddress(owner)}</b></span>
+                        <span
+                          className="text-[#808191] text-base text-justify ml-2">by <b>{shortenAddress(owner)}</b></span>
+                    </div>
+                    <div className="mb-3">
+                        <span className={`${statusName === 'ACTIVE' ? 'bg-green-600' : 'bg-red-500'} p-[10px] rounded-[10px] font-bold`}>{statusName}</span>
                     </div>
                 </div>
             </div>

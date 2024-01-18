@@ -29,7 +29,10 @@ type CrowdfundingProviderType = {
     isProjectCreated: boolean,
     setIsProjectCreated: (value: boolean) => void,
     getProject: (id: string) => CampaignType | undefined,
-    contract: any
+    contract: any,
+    donate: (id: number, amount: string) => void
+    getProjectDonators: (id: string) => any[],
+    deactivateProject: (id: string) => void
 }
 
 type AlertMessage = {
@@ -53,6 +56,7 @@ export type CampaignType = CampaignCreateType & {
     donators: string[]
     donations: unknown[]
     status: string
+    statusName: string
     target: unknown
 }
 
@@ -69,7 +73,10 @@ export const CrowdfundingContext = createContext<CrowdfundingProviderType>({
     setIsProjectCreated: () => undefined,
     isProjectCreated: false,
     getProject: () => undefined,
-    contract: undefined
+    contract: undefined,
+    donate: () => undefined,
+    getProjectDonators: () => [],
+    deactivateProject: () => undefined
 })
 
 export const CrowdfundingProvider = ({ children }: { children: any }) => {
@@ -77,6 +84,9 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
     const { mutateAsync: createCampaign } = useContractWrite(contract, 'createCampaign');
     const { mutateAsync: getCampaigns } = useContractWrite(contract, 'getCampaigns');
     const { mutateAsync: getCampaign } = useContractWrite(contract, 'getCampaign');
+    const { mutateAsync: donateToCampaign } = useContractWrite(contract, 'donateToCampaign');
+    const { mutateAsync: getDonators } = useContractWrite(contract, 'getDonators');
+    const { mutateAsync: updateCampaignStatus } = useContractWrite(contract, 'updateCampaignStatus');
 
     const connect = useConnect();
     const disconnect = useDisconnect()
@@ -163,7 +173,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
     }
 
     const formatCampaign = (campaign: CampaignType, index) => ({
-        id: index,
+        id: campaign.id || index,
         owner: campaign.owner,
         title: campaign.title,
         description: campaign.description,
@@ -171,7 +181,8 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         amountCollected: useEthAmountParser(campaign.amountCollected._hex, 4),
         deadline: useTimestampParser(campaign.deadline._hex),
         image: campaign.image,
-        status: campaign.status
+        status: campaign.status,
+        statusName: campaign.statusName,
     })
 
     const getAllProjects = async () => {
@@ -181,7 +192,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
             }
             setIsLoading(true)
             const campaigns = await getCampaigns({});
-            const campaignsFormatted = campaigns.map(formatCampaign)
+            const campaignsFormatted = campaigns.map(formatCampaign).filter(campaign => campaign.status === 0)
             setCampaignsList(campaignsFormatted)
         } catch (error) {
             console.log(error)
@@ -226,11 +237,82 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
             if (!campaign) {
                 return
             }
-            const [campaignFormatted] = [campaign].map(formatCampaign)
+            const campaignWithId = {
+                ...campaign,
+                id
+            }
+            const [campaignFormatted] = [campaignWithId].map(formatCampaign)
             return campaignFormatted
         } catch (error) {
             console.log(error)
             throw new Error("No campaign")
+        } finally {
+            setLoadingPageMessage(undefined)
+        }
+    }
+
+    const getProjectDonators = async (id: string) => {
+        try {
+            if (!contract || !currentAccount) {
+                return
+            }
+            const donators = await getDonators({
+                args: [id]
+            });
+            return Array.from(new Set(donators[0]))
+        } catch (error) {
+            console.log(error)
+            throw new Error("No campaign")
+        } finally {
+            setLoadingPageMessage(undefined)
+        }
+    }
+
+    const donate = async (id: number, amount: string) => {
+        try {
+            if (!contract || !currentAccount) {
+                return
+            }
+            setLoadingPageMessage("Your donation is being created!")
+            const campaign = await donateToCampaign(
+              {
+                  args: [id],
+                  overrides: {
+                      value: ethers.utils.parseEther(amount)
+                  }
+              },
+            );
+            if (campaign.receipt.status === 1) {
+                setAlertMessage({
+                    title: 'Congrats!',
+                    body: 'Your donation was proced with success',
+                    type: 'success'
+                })
+            }
+        } catch (error) {
+            console.log(error)
+            setAlertMessage({
+                title: "Ops!",
+                body: "There was an error to process your donation. Please, try again later!",
+                type: "error"
+            })
+            throw new Error("Error to donate")
+        } finally {
+            setLoadingPageMessage(undefined)
+        }
+    }
+
+    const deactivateProject = async (id: string) => {
+        try {
+            if (!contract || !currentAccount) {
+                return
+            }
+            setLoadingPageMessage("We are deactivating your project!")
+            await updateCampaignStatus({
+                args: [id, "1"]
+            })
+        } catch (error) {
+            console.log(error)
         } finally {
             setLoadingPageMessage(undefined)
         }
@@ -252,7 +334,10 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         setIsProjectCreated,
         isProjectCreated,
         getProject,
-        contract
+        contract,
+        donate,
+        getProjectDonators,
+        deactivateProject
     }
     return (
         <CrowdfundingContext.Provider value={providerData}>

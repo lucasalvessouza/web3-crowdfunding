@@ -4,13 +4,23 @@ import {CrowdfundingContext} from "../../context/CrowdfundingContext.tsx";
 import {useParams} from "react-router-dom";
 import Loader from "../Loader";
 import moment from "moment/moment";
-
+import {shortenAddress} from "../../utils";
+const generateDonatorsAvatar = (item: string) => {
+    return (
+      <div className="flex items-end gap-2" key={item}>
+          <img  className="bg-gray-400 rounded-full" src={`https://api.dicebear.com/7.x/personas/svg?seed=${item}`} width={50} alt="avatar" />
+          <span className="text-white">{item}</span>
+      </div>
+    )
+}
 
 const CampaignDetail = () => {
-    const {getProject, contract, currentAccount} = useContext(CrowdfundingContext)
+    const {getProject, contract, currentAccount, donate, getProjectDonators, deactivateProject} = useContext(CrowdfundingContext)
     const {id} = useParams()
     const [project, setProject] = useState()
+    const [donationValue, setDonationValue] = useState("0.1")
     const [isProjectLoading, setIsProjectLoading] = useState(true)
+    const [donators, setDonators] = useState<string[]>()
 
     useEffect(() => {
         setIsProjectLoading(true)
@@ -27,6 +37,19 @@ const CampaignDetail = () => {
         }
 
     }, [id, contract]);
+
+    useEffect(() => {
+        if (project) {
+            getProjectDonators(project.id)
+            getProjectDonators(project.id)
+              .then((donators: string[]) => setDonators(donators.map(donator => shortenAddress(donator))))
+        }
+    }, [project]);
+
+    const donateToCampaign = () => {
+        donate(Number(project.id), donationValue)
+          .then(() => window.location.reload())
+    }
 
     if (!project && !isProjectLoading) {
         return (
@@ -51,13 +74,13 @@ const CampaignDetail = () => {
                 alt="Project image"
               />
               <div className="flex flex-col justify-between gap-4">
-                  <CampaignStats title={moment(project.deadline).diff(moment(), 'days')} description="Days Left"/>
-                  <CampaignStats title={project.amountCollected} description="Raised of 0.5"/>
-                  <CampaignStats title="0" description="Total Backers"/>
+                  <CampaignStats title={moment(project.deadline).diff(moment(), 'days').toString()} description="Days Left"/>
+                  <CampaignStats title={project?.amountCollected} description="Raised of 0.5"/>
+                  <CampaignStats title={(donators?.length || 0).toString()} description="Total Backers"/>
               </div>
           </div>
 
-          <div className="mt-[60px] flex lg:flex-row flex-col gap-[40px] md:gap-0 lg:gap-0">
+          <div className="mt-[60px] flex lg:flex-row flex-col gap-[40px] md:gap-2 lg:gap-2">
               <div className="flex-[2] flex flex-col gap-[40px]">
                   <div className="flex flex-col">
                       <span className="font-epilogue font-bold text-[20px] text-white mb-3">CREATOR</span>
@@ -102,8 +125,20 @@ const CampaignDetail = () => {
                   </div>
                   <div className="flex flex-col">
                       <span className="font-epilogue font-bold text-[20px] text-white">DONATORS</span>
-                      <span className="font-epilogue font-normal text-[14px] text-gray-400">No donators yet. Be the first one!</span>
+                      {
+                          !donators?.length
+                            ? <span className="font-epilogue font-normal text-[14px] text-gray-400">No donators yet. Be the first one!</span>
+                            :
+                            <div className="flex flex-row flex-wrap gap-4">
+                                {donators.map(generateDonatorsAvatar)}
+                            </div>
+                      }
                   </div>
+                  {currentAccount === project.owner && project.status === 0 &&
+                    <div>
+                        <button className="relative inline-flex items-center justify-center rounded-md p-2 text-white bg-red-500" onClick={() => deactivateProject(project.id)}>Deactivate project</button>
+                    </div>
+                  }
               </div>
               {currentAccount !== project.owner &&
                 <div className="flex-1">
@@ -113,7 +148,8 @@ const CampaignDetail = () => {
                               className="font-epilogue font-bold text-[18px] text-[#808191]">Fund the campaign</span>
                         <input
                           className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                          defaultValue={0.1}
+                          defaultValue={donationValue}
+                          onChange={(e) => setDonationValue(e.target.value.toString())}
                           type="number"
                           step="0.1"
                         />
@@ -125,7 +161,10 @@ const CampaignDetail = () => {
                                 a
                                 difference today.</p>
                         </div>
-                        <button className="bg-purple-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        <button
+                          onClick={donateToCampaign}
+                          className="bg-purple-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        >
                             Fund Campaign
                         </button>
                     </div>
