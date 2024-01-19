@@ -64,10 +64,17 @@ contract Contract {
         campaign.amountCollected = campaign.amountCollected + amount;
     }
 
-    function updateCampaignStatus(uint256 _id, Statuses status) ownerOnly public {
+    function deactivateCampaign(uint256 _id) public {
         Campaign storage campaign = campaigns[_id];
-        campaign.status = status;
-        campaign.statusName = getStatusKey(status);
+        campaign.status = Statuses.DEACTIVATED;
+        campaign.statusName = getStatusKey(Statuses.DEACTIVATED);
+
+        for(uint i = 0; i < campaign.donators.length; i++) {
+            address donator = campaign.donators[i];
+            uint256 donation = campaign.donations[i];
+            payable(donator).transfer(donation);
+
+        }
     }
 
     function getDonators(uint256 _id) view public returns (address[] memory, uint256[] memory) {

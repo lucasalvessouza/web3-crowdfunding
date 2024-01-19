@@ -32,7 +32,8 @@ type CrowdfundingProviderType = {
     contract: any,
     donate: (id: number, amount: string) => void
     getProjectDonators: (id: string) => any[],
-    deactivateProject: (id: string) => void
+    deactivateProject: (id: string) => void,
+    getUserProjects: () => void
 }
 
 type AlertMessage = {
@@ -76,7 +77,8 @@ export const CrowdfundingContext = createContext<CrowdfundingProviderType>({
     contract: undefined,
     donate: () => undefined,
     getProjectDonators: () => [],
-    deactivateProject: () => undefined
+    deactivateProject: () => undefined,
+    getUserProjects: () => undefined
 })
 
 export const CrowdfundingProvider = ({ children }: { children: any }) => {
@@ -86,7 +88,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
     const { mutateAsync: getCampaign } = useContractWrite(contract, 'getCampaign');
     const { mutateAsync: donateToCampaign } = useContractWrite(contract, 'donateToCampaign');
     const { mutateAsync: getDonators } = useContractWrite(contract, 'getDonators');
-    const { mutateAsync: updateCampaignStatus } = useContractWrite(contract, 'updateCampaignStatus');
+    const { mutateAsync: deactivateCampaign } = useContractWrite(contract, 'deactivateCampaign');
 
     const connect = useConnect();
     const disconnect = useDisconnect()
@@ -302,14 +304,19 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         }
     }
 
-    const deactivateProject = async (id: string) => {
+    const deactivateProject = async (id: number) => {
         try {
             if (!contract || !currentAccount) {
                 return
             }
             setLoadingPageMessage("We are deactivating your project!")
-            await updateCampaignStatus({
-                args: [id, "1"]
+            await deactivateCampaign({
+                args: [id]
+            })
+            setAlertMessage({
+                title: 'Done!',
+                body: 'Your project was deactivated with success.',
+                type: 'success'
             })
         } catch (error) {
             console.log(error)
@@ -337,7 +344,8 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         contract,
         donate,
         getProjectDonators,
-        deactivateProject
+        deactivateProject,
+        getUserProjects
     }
     return (
         <CrowdfundingContext.Provider value={providerData}>

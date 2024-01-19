@@ -1,7 +1,7 @@
 import CampaignStats from "../CampaignStats";
 import {useContext, useEffect, useState} from "react";
 import {CrowdfundingContext} from "../../context/CrowdfundingContext.tsx";
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import Loader from "../Loader";
 import moment from "moment/moment";
 import {shortenAddress} from "../../utils";
@@ -15,6 +15,7 @@ const generateDonatorsAvatar = (item: string) => {
 }
 
 const CampaignDetail = () => {
+    const navigate = useNavigate()
     const {getProject, contract, currentAccount, donate, getProjectDonators, deactivateProject} = useContext(CrowdfundingContext)
     const {id} = useParams()
     const [project, setProject] = useState()
@@ -49,6 +50,11 @@ const CampaignDetail = () => {
     const donateToCampaign = () => {
         donate(Number(project.id), donationValue)
           .then(() => window.location.reload())
+    }
+
+    const submitDeactivateProject = () => {
+        deactivateProject(Number(project.id))
+          .then(() => navigate('/my-campaigns'))
     }
 
     if (!project && !isProjectLoading) {
@@ -136,7 +142,13 @@ const CampaignDetail = () => {
                   </div>
                   {currentAccount === project.owner && project.status === 0 &&
                     <div>
-                        <button className="relative inline-flex items-center justify-center rounded-md p-2 text-white bg-red-500" onClick={() => deactivateProject(project.id)}>Deactivate project</button>
+                        <button className="relative inline-flex items-center justify-center rounded-md p-2 text-white bg-red-500" onClick={submitDeactivateProject}>Deactivate project</button>
+                    </div>
+                  }
+                  {project.statusName &&
+                    <div className="mb-3">
+                        <span
+                          className={`${project.statusName === 'ACTIVE' ? 'bg-green-600' : 'bg-red-500'} p-[10px] rounded-[10px] font-bold text-white`}>{project.statusName}</span>
                     </div>
                   }
               </div>

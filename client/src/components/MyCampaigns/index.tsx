@@ -1,11 +1,15 @@
 import CampaignCard from "../CampaignCard";
-import {useContext} from "react";
+import {useContext, useEffect} from "react";
 import { CrowdfundingContext } from "../../context/CrowdfundingContext";
 import Loader from "../Loader";
 
 
 const MyCampaigns = () => {
-    const { userCampaignsList, isLoading, currentAccount } = useContext(CrowdfundingContext)
+    const { userCampaignsList, isLoading, currentAccount, getUserProjects } = useContext(CrowdfundingContext)
+
+    useEffect(() => {
+      getUserProjects()
+    }, [])
 
     return (
         <>
