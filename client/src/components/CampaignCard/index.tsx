@@ -19,7 +19,7 @@ const CampaignCard = (campaign: CampaignType) => {
     // const category = "gamer"
     const daysLeft = moment(deadline).diff(moment(), 'days')
     return (
-        <Link to={`/campaigns/${id}`}>
+        <Link to={`/campaigns/${id}`} className="w-full md:w-auto lg:w-auto">
             <div
                 className="sm:w-[288px] min-w-[316px]  w-full overflow-hidden shadow-lg rounded-[15px] bg-[#1c1c24] cursor-pointer text-white transform transition duration-500 hover:scale-105">
                 <img className="w-full h-[158px] object-cover" src={image} alt="Project image"/>

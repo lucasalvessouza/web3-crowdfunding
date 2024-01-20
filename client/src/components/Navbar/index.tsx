@@ -33,11 +33,11 @@ const Navbar = () => {
                     </div>
                     <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                         <div className="flex flex-shrink-0 items-center">
-                            <img className="h-10 w-auto"
+                            <img className="h-[60px] w-auto"
                                  src={logo}
                                  alt="Your Company"/>
                         </div>
-                        <div className="hidden sm:ml-6 sm:block">
+                        <div className="hidden sm:ml-6 sm:flex h-auto items-center">
                             <ul className="flex space-x-4">
                                 <li
                                     className="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">
@@ -87,8 +87,15 @@ const Navbar = () => {
                             <Link to={"/campaigns/create"}>Create campaign</Link>
                         </li>
                         <li
-                            className="text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">
-                            <Link to={"/my-campaigns"}>Connect Wallet</Link>
+                            className="flex flex-col  gap-3 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md px-3 py-2 text-sm font-medium">
+                            {currentAccount && <div className="flex items-center font-epilogue bg-blue-600 font-semibold text-[16px] leading-[26px] text-white min-h-[52px] px-4 rounded-[10px]">ETH: {walletBalance}</div>}
+                            <button
+                              onClick={currentAccount ? disconnectedWallet : connectWallet}
+                              className={`flex items-center ${!currentAccount ? 'bg-blue-600 hover:bg-[#3a72ba]' : 'bg-purple-600 hover:bg-purple-400'} font-epilogue font-semibold text-[16px] leading-[26px] text-white min-h-[52px] px-4 rounded-[10px] text-center`}>
+                                {isWalletLoading && <Loader style={"mr-3"}/>}
+                                {currentAccount && <PiPlugsConnectedFill className="w-[30px]"/>}
+                                {currentAccount ? 'Disconnect Wallet' : 'Connect Wallet'}
+                            </button>
                         </li>
                     </ul>
                 </div>
