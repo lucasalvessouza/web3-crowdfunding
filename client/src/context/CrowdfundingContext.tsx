@@ -33,7 +33,8 @@ type CrowdfundingProviderType = {
     donate: (id: number, amount: string) => void
     getProjectDonators: (id: string) => any[],
     deactivateProject: (id: string) => void,
-    getUserProjects: () => void
+    getUserProjects: () => void,
+    claimProject: () => void
 }
 
 type AlertMessage = {
@@ -59,6 +60,7 @@ export type CampaignType = CampaignCreateType & {
     status: string
     statusName: string
     target: unknown
+    canUserClaimFunds?: boolean
 }
 
 export const CrowdfundingContext = createContext<CrowdfundingProviderType>({
@@ -78,7 +80,8 @@ export const CrowdfundingContext = createContext<CrowdfundingProviderType>({
     donate: () => undefined,
     getProjectDonators: () => [],
     deactivateProject: () => undefined,
-    getUserProjects: () => undefined
+    getUserProjects: () => undefined,
+    claimProject: () => undefined
 })
 
 export const CrowdfundingProvider = ({ children }: { children: any }) => {
@@ -89,6 +92,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
     const { mutateAsync: donateToCampaign } = useContractWrite(contract, 'donateToCampaign');
     const { mutateAsync: getDonators } = useContractWrite(contract, 'getDonators');
     const { mutateAsync: deactivateCampaign } = useContractWrite(contract, 'deactivateCampaign');
+    const { mutateAsync: claim } = useContractWrite(contract, 'claim');
 
     const connect = useConnect();
     const disconnect = useDisconnect()
@@ -185,6 +189,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         image: campaign.image,
         status: campaign.status,
         statusName: campaign.statusName,
+        canUserClaimFunds: campaign.canUserClaimFunds
     })
 
     const getAllProjects = async () => {
@@ -233,7 +238,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
             if (!contract || !currentAccount) {
                 return
             }
-            const campaign = await getCampaign({
+            const [campaign, canUserClaimFunds] = await getCampaign({
                 args: [id]
             });
             if (!campaign) {
@@ -241,7 +246,8 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
             }
             const campaignWithId = {
                 ...campaign,
-                id
+                id,
+                canUserClaimFunds
             }
             const [campaignFormatted] = [campaignWithId].map(formatCampaign)
             return campaignFormatted
@@ -325,6 +331,27 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         }
     }
 
+    const claimProject = async (id: number) => {
+        try {
+            if (!contract || !currentAccount) {
+                return
+            }
+            setLoadingPageMessage("We are processing your funds!")
+            await claim({
+                args: [id]
+            })
+            setAlertMessage({
+                title: 'Done!',
+                body: 'The projects funds were sent to your account!',
+                type: 'success'
+            })
+        } catch (error) {
+            console.log(error)
+        } finally {
+            setLoadingPageMessage(undefined)
+        }
+    }
+
     const providerData = {
         currentAccount,
         connectWallet,
@@ -345,7 +372,8 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         donate,
         getProjectDonators,
         deactivateProject,
-        getUserProjects
+        getUserProjects,
+        claimProject
     }
     return (
         <CrowdfundingContext.Provider value={providerData}>

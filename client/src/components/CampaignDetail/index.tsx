@@ -16,7 +16,7 @@ const generateDonatorsAvatar = (item: string) => {
 
 const CampaignDetail = () => {
     const navigate = useNavigate()
-    const {getProject, contract, currentAccount, donate, getProjectDonators, deactivateProject} = useContext(CrowdfundingContext)
+    const {getProject, contract, currentAccount, donate, getProjectDonators, deactivateProject, claimProject} = useContext(CrowdfundingContext)
     const {id} = useParams()
     const [project, setProject] = useState()
     const [donationValue, setDonationValue] = useState("0.1")
@@ -41,6 +41,8 @@ const CampaignDetail = () => {
 
     useEffect(() => {
         if (project) {
+            console.log(project.deadline)
+            console.log(moment(project.deadline).diff(moment(), 'seconds'))
             getProjectDonators(project.id)
             getProjectDonators(project.id)
               .then((donators: string[]) => setDonators(donators.map(donator => shortenAddress(donator))))
@@ -54,6 +56,11 @@ const CampaignDetail = () => {
 
     const submitDeactivateProject = () => {
         deactivateProject(Number(project.id))
+          .then(() => navigate('/my-campaigns'))
+    }
+
+    const claimProjectFunds = () => {
+        claimProject(Number(project.id))
           .then(() => navigate('/my-campaigns'))
     }
 
@@ -129,6 +136,15 @@ const CampaignDetail = () => {
                       <span className="font-epilogue font-bold text-[20px] text-white">STORY</span>
                       <span className="font-epilogue font-normal text-[14px] text-gray-400">{project.description}</span>
                   </div>
+                  <div className="flex flex-col gap-3">
+                      <span className="font-epilogue font-bold text-[20px] text-white">STATUS</span>
+                      {project.statusName &&
+                        <div>
+                                <span
+                                  className={`${project.statusName === 'ACTIVE' ? 'bg-green-600' : 'bg-red-500'} p-[10px] rounded-[10px] font-bold text-white mt-3`}>{project.statusName}</span>
+                        </div>
+                      }
+                  </div>
                   <div className="flex flex-col">
                       <span className="font-epilogue font-bold text-[20px] text-white">DONATORS</span>
                       {
@@ -141,14 +157,18 @@ const CampaignDetail = () => {
                       }
                   </div>
                   {currentAccount === project.owner && project.status === 0 &&
-                    <div>
-                        <button className="relative inline-flex items-center justify-center rounded-md p-2 text-white bg-red-500" onClick={submitDeactivateProject}>Deactivate project</button>
-                    </div>
-                  }
-                  {project.statusName &&
-                    <div className="mb-3">
-                        <span
-                          className={`${project.statusName === 'ACTIVE' ? 'bg-green-600' : 'bg-red-500'} p-[10px] rounded-[10px] font-bold text-white`}>{project.statusName}</span>
+                    <div className="flex gap-3">
+                        <button
+                          className="relative inline-flex items-center justify-center rounded-md p-2 text-white bg-red-500"
+                          onClick={submitDeactivateProject}>Deactivate project
+                        </button>
+                        {
+                          project.canUserClaimFunds &&
+                          <button
+                            className="relative inline-flex items-center justify-center rounded-md p-2 text-white bg-blue-600"
+                            onClick={claimProjectFunds}>Claim Funds
+                          </button>
+                        }
                     </div>
                   }
               </div>
