@@ -27,6 +27,7 @@ contract Contract {
         uint256[] donations;
         Statuses status;
         string statusName;
+        bool isRefunded;
     }
 
     mapping(uint256 => Campaign) public campaigns;
@@ -76,8 +77,8 @@ contract Contract {
         Campaign storage campaign = campaigns[_id];
         campaign.status = Statuses.DEACTIVATED;
         campaign.statusName = getStatusKey(Statuses.DEACTIVATED);
-
         refundDonators(campaign.donators, campaign.donations);
+        campaign.isRefunded = true;
     }
 
     function claim(uint256 _id) public {
@@ -85,10 +86,11 @@ contract Contract {
         require(campaign.owner == msg.sender, 'You need to be the contract owner to claim the funds.');
         require(block.timestamp > campaign.deadline, 'Deadline is not achieved yet.');
 
-        if (campaign.amountCollected < campaign.target) {
+        if (campaignShouldBeRefunded(campaign)) {
             refundDonators(campaign.donators, campaign.donations);
             campaign.status = Statuses.DEACTIVATED;
             campaign.statusName = getStatusKey(Statuses.DEACTIVATED);
+            campaign.isRefunded = true;
             return;
         }
 
@@ -116,6 +118,10 @@ contract Contract {
         Campaign storage campaign = campaigns[_id];
         bool canUserClaimFunds = block.timestamp > campaign.deadline && campaign.amountCollected >= campaign.target;
         return (campaign, canUserClaimFunds);
+    }
+
+    function campaignShouldBeRefunded(Campaign memory campaign) private returns (bool) {
+        return block.timestamp > campaign.deadline && campaign.amountCollected < campaign.target;
     }
 
     function getStatusKey(Statuses status) public pure returns (string memory) {
