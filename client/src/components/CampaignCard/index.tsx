@@ -16,7 +16,7 @@ const CampaignCard = (campaign: CampaignType) => {
       statusName
     } = campaign
 
-    const category = "gamer"
+    // const category = "gamer"
     const daysLeft = moment(deadline).diff(moment(), 'days')
     return (
         <Link to={`/campaigns/${id}`}>
@@ -40,8 +40,8 @@ const CampaignCard = (campaign: CampaignType) => {
                     </div>
                 </div>
                 <div className="px-6 py-4">
-                    <span
-                      className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">#{category}</span>
+                    {/*<span*/}
+                    {/*  className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2">#{category}</span>*/}
 
                     <div className="flex mt-3 items-center">
                         <svg viewBox="0 0 36 36" fill="none" role="img" xmlns="http://www.w3.org/2000/svg" width="25"

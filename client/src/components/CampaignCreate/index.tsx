@@ -5,10 +5,11 @@ import { CrowdfundingContext } from "../../context/CrowdfundingContext";
 import {useFormik} from "formik";
 import * as yup from "yup"
 import {useNavigate} from "react-router-dom";
+import moment from "moment";
 
 const CampaignCreate = () => {
     const [value, setValue] = useState<DateValueType>({
-        startDate: new Date(),
+        startDate: moment().add(1, 'days').toDate(),
         endDate: new Date()
     });
     const navigate = useNavigate()
@@ -128,6 +129,7 @@ const CampaignCreate = () => {
                                 asSingle={true}
                                 value={value}
                                 onChange={handleDatepickerChange}
+                                minDate={moment().add(1, 'days').toDate()}
                             />
                         </div>
                     </div>

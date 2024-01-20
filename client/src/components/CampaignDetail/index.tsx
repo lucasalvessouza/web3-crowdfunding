@@ -19,6 +19,7 @@ const CampaignDetail = () => {
     const {getProject, contract, currentAccount, donate, getProjectDonators, deactivateProject, claimProject} = useContext(CrowdfundingContext)
     const {id} = useParams()
     const [project, setProject] = useState()
+    const [projectShouldBeDeactivated, setProjectShouldBeDeactivated] = useState(false)
     const [donationValue, setDonationValue] = useState("0.1")
     const [isProjectLoading, setIsProjectLoading] = useState(true)
     const [donators, setDonators] = useState<string[]>()
@@ -41,11 +42,14 @@ const CampaignDetail = () => {
 
     useEffect(() => {
         if (project) {
-            console.log(project.deadline)
-            console.log(moment(project.deadline).diff(moment(), 'seconds'))
             getProjectDonators(project.id)
             getProjectDonators(project.id)
               .then((donators: string[]) => setDonators(donators.map(donator => shortenAddress(donator))))
+
+            console.log()
+            if (moment(project.deadline).diff(moment(), 'days') <= 0 && project.status === 0 && !project.canUserClaimFunds) {
+                setProjectShouldBeDeactivated(true)
+            }
         }
     }, [project]);
 
@@ -132,33 +136,54 @@ const CampaignDetail = () => {
                       <span className="font-epilogue font-bold text-[20px] text-white">NAME</span>
                       <span className="font-epilogue font-normal text-[14px] text-gray-400">{project.title}</span>
                   </div>
-                  <div className="flex flex-col">
-                      <span className="font-epilogue font-bold text-[20px] text-white">STORY</span>
-                      <span className="font-epilogue font-normal text-[14px] text-gray-400">{project.description}</span>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                      <span className="font-epilogue font-bold text-[20px] text-white">STATUS</span>
-                      {project.statusName &&
-                        <div>
+                  {!projectShouldBeDeactivated ?
+                    <>
+                        <div className="flex flex-col">
+                            <span className="font-epilogue font-bold text-[20px] text-white">STORY</span>
+                            <span
+                              className="font-epilogue font-normal text-[14px] text-gray-400">{project.description}</span>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            <span className="font-epilogue font-bold text-[20px] text-white">STATUS</span>
+                            {project.statusName &&
+                              <div>
                                 <span
                                   className={`${project.statusName === 'ACTIVE' ? 'bg-green-600' : 'bg-red-500'} p-[10px] rounded-[10px] font-bold text-white mt-3`}>{project.statusName}</span>
+                              </div>
+                            }
                         </div>
-                      }
-                  </div>
-                  <div className="flex flex-col">
-                      <span className="font-epilogue font-bold text-[20px] text-white">DONATORS</span>
-                      {
-                          !donators?.length
-                            ? <span className="font-epilogue font-normal text-[14px] text-gray-400">No donators yet. Be the first one!</span>
-                            :
-                            <div className="flex flex-row flex-wrap gap-4">
-                                {donators.map(generateDonatorsAvatar)}
-                            </div>
-                      }
-                  </div>
+                        <div className="flex flex-col">
+                            <span className="font-epilogue font-bold text-[20px] text-white">DONATORS</span>
+                            {project.isRefunded && donators?.length > 0 && <span className="my-2 text-white font-bold">All donations were refunded</span>}
+                            {
+                                !donators?.length
+                                  ?
+                                  <span className="font-epilogue font-normal text-[14px] text-gray-400">No donators yet. Be the first one!</span>
+                                  :
+                                  <div className="flex flex-row flex-wrap gap-4">
+                                      {donators.map(generateDonatorsAvatar)}
+                                  </div>
+                            }
+                        </div>
+                    </> :
+                    <div className="text-white text-center font-bold">
+                        {
+                            currentAccount === project.owner ?
+                              <>
+                                  <h1>This project achieved its deadline and unfortunately, the target amount was not
+                                      achieved.</h1>
+                                  <h1>Click in the button below to deactivate the project and refund the donators,
+                                      please.</h1>
+                              </> :
+                              <>
+                                  <h1>This project achieved its deadline and will be deactivated soon.</h1>
+                              </>
+                        }
+                    </div>
+                  }
                   {currentAccount === project.owner && project.status === 0 &&
                     <div className="flex gap-3">
-                        <button
+                    <button
                           className="relative inline-flex items-center justify-center rounded-md p-2 text-white bg-red-500"
                           onClick={submitDeactivateProject}>Deactivate project
                         </button>
@@ -172,7 +197,7 @@ const CampaignDetail = () => {
                     </div>
                   }
               </div>
-              {currentAccount !== project.owner &&
+              {currentAccount !== project.owner && !projectShouldBeDeactivated &&
                 <div className="flex-1">
                     <span className="font-epilogue font-bold text-[20px] text-white">FUND</span>
                     <div className="flex flex-col gap-[20px] w-full p-[20px] bg-gray-800 rounded-2xl mt-4">

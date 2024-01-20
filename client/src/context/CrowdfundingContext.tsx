@@ -61,6 +61,7 @@ export type CampaignType = CampaignCreateType & {
     statusName: string
     target: unknown
     canUserClaimFunds?: boolean
+    isRefunded?: boolean
 }
 
 export const CrowdfundingContext = createContext<CrowdfundingProviderType>({
@@ -189,7 +190,8 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         image: campaign.image,
         status: campaign.status,
         statusName: campaign.statusName,
-        canUserClaimFunds: campaign.canUserClaimFunds
+        canUserClaimFunds: campaign.canUserClaimFunds,
+        isRefunded: campaign.isRefunded
     })
 
     const getAllProjects = async () => {
