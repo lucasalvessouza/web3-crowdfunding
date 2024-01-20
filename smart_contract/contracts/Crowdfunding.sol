@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 //import "@thirdweb-dev/contracts/base/ERC721Base.sol";
 
 contract Contract {
-    enum Statuses { ACTIVE, DEACTIVATED, EXPIRED }
+    enum Statuses { ACTIVE, DEACTIVATED, EXPIRED, FINISHED }
     address owner;
     constructor() public {
         owner = msg.sender;
@@ -64,17 +64,37 @@ contract Contract {
         campaign.amountCollected = campaign.amountCollected + amount;
     }
 
+    function refundDonators(address[] memory donators, uint256[] memory donations) private {
+        for(uint i = 0; i < donators.length; i++) {
+            address donator = donators[i];
+            uint256 donation = donations[i];
+            payable(donator).transfer(donation);
+        }
+    }
+
     function deactivateCampaign(uint256 _id) public {
         Campaign storage campaign = campaigns[_id];
         campaign.status = Statuses.DEACTIVATED;
         campaign.statusName = getStatusKey(Statuses.DEACTIVATED);
 
-        for(uint i = 0; i < campaign.donators.length; i++) {
-            address donator = campaign.donators[i];
-            uint256 donation = campaign.donations[i];
-            payable(donator).transfer(donation);
+        refundDonators(campaign.donators, campaign.donations);
+    }
 
+    function claim(uint256 _id) public {
+        Campaign storage campaign = campaigns[_id];
+        require(campaign.owner == msg.sender, 'You need to be the contract owner to claim the funds.');
+        require(block.timestamp > campaign.deadline, 'Deadline is not achieved yet.');
+
+        if (campaign.amountCollected < campaign.target) {
+            refundDonators(campaign.donators, campaign.donations);
+            campaign.status = Statuses.DEACTIVATED;
+            campaign.statusName = getStatusKey(Statuses.DEACTIVATED);
+            return;
         }
+
+        payable(campaign.owner).transfer(campaign.amountCollected);
+        campaign.status = Statuses.FINISHED;
+        campaign.statusName = getStatusKey(Statuses.FINISHED);
     }
 
     function getDonators(uint256 _id) view public returns (address[] memory, uint256[] memory) {
@@ -92,14 +112,17 @@ contract Contract {
         return allCampaigns;
     }
 
-    function getCampaign(uint256 _id) public view returns (Campaign memory) {
-        return campaigns[_id];
+    function getCampaign(uint256 _id) public view returns (Campaign memory, bool) {
+        Campaign storage campaign = campaigns[_id];
+        bool canUserClaimFunds = block.timestamp > campaign.deadline && campaign.amountCollected >= campaign.target;
+        return (campaign, canUserClaimFunds);
     }
 
     function getStatusKey(Statuses status) public pure returns (string memory) {
         if (Statuses.ACTIVE == status) return "ACTIVE";
         if (Statuses.DEACTIVATED == status) return "DEACTIVATED";
         if (Statuses.EXPIRED == status) return "EXPIRED";
+        if (Statuses.FINISHED == status) return "FINISHED";
         return "";
     }
 
