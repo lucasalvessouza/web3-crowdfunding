@@ -31,7 +31,7 @@ const CampaignCard = (campaign: CampaignType) => {
                 </div>
                 <div className="flex px-6 py-4 justify-between">
                     <div className="flex flex-col">
-                        <span className="font-bold">{amountCollected || 0}</span>
+                        <span className="font-bold">{amountCollected}</span>
                         <span className="font-medium text-[#808191]">Raised of {target}</span>
                     </div>
                     <div className="flex flex-col text-right">

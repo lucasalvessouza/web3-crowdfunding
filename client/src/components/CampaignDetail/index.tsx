@@ -1,6 +1,6 @@
 import CampaignStats from "../CampaignStats";
 import {useContext, useEffect, useState} from "react";
-import {CrowdfundingContext} from "../../context/CrowdfundingContext.tsx";
+import {CampaignType, CrowdfundingContext} from "../../context/CrowdfundingContext.tsx";
 import {useNavigate, useParams} from "react-router-dom";
 import Loader from "../Loader";
 import moment from "moment/moment";
@@ -18,7 +18,7 @@ const CampaignDetail = () => {
     const navigate = useNavigate()
     const {getProject, contract, currentAccount, donate, getProjectDonators, deactivateProject, claimProject} = useContext(CrowdfundingContext)
     const {id} = useParams()
-    const [project, setProject] = useState()
+    const [project, setProject] = useState<CampaignType>()
     const [projectShouldBeDeactivated, setProjectShouldBeDeactivated] = useState(false)
     const [donationValue, setDonationValue] = useState("0.1")
     const [isProjectLoading, setIsProjectLoading] = useState(true)
@@ -28,9 +28,9 @@ const CampaignDetail = () => {
         setIsProjectLoading(true)
         if (id && contract) {
             getProject(id)
-              ?.then(campaign => {
+              ?.then((campaign: any) => {
                   if (!campaign) {
-                      //TODO Create a not found page
+                      navigate('/')
                   }
                   setProject(campaign)
               }).finally(() => {
@@ -43,26 +43,36 @@ const CampaignDetail = () => {
     useEffect(() => {
         if (project) {
             getProjectDonators(project.id)
-            getProjectDonators(project.id)
-              .then((donators: string[]) => setDonators(donators.map(donator => shortenAddress(donator))))
+              .then((donators: any) => {
+                  setDonators(donators.map((donator: string) => shortenAddress(donator)));
+              })
 
-            if (moment(project.deadline).diff(moment(), 'days') <= 0 && project.status === 0 && !project.canUserClaimFunds) {
+            if (moment(project.deadline).diff(moment(), 'days') <= 0 && Number(project.status) === 0 && !project.canUserClaimFunds) {
                 setProjectShouldBeDeactivated(true)
             }
         }
     }, [project]);
 
     const donateToCampaign = () => {
+        if (!project) {
+            return
+        }
         donate(Number(project.id), donationValue)
           .then(() => window.location.reload())
     }
 
     const submitDeactivateProject = () => {
+        if (!project) {
+            return
+        }
         deactivateProject(Number(project.id))
           .then(() => navigate('/my-campaigns'))
     }
 
     const claimProjectFunds = () => {
+        if (!project) {
+            return
+        }
         claimProject(Number(project.id))
           .then(() => navigate('/my-campaigns'))
     }
@@ -81,7 +91,7 @@ const CampaignDetail = () => {
         )
     }
 
-    return (
+    return project && (
       <div className="flex-col">
           <div className="flex flex-col md:flex-row lg:flex-row gap-5">
               <img
@@ -91,7 +101,7 @@ const CampaignDetail = () => {
               />
               <div className="flex flex-col justify-between gap-4">
                   <CampaignStats title={moment(project.deadline).diff(moment(), 'days').toString()} description="Days Left"/>
-                  <CampaignStats title={project?.amountCollected} description="Raised of 0.5"/>
+                  <CampaignStats title={project?.amountCollected || "0"} description="Raised of 0.5"/>
                   <CampaignStats title={(donators?.length || 0).toString()} description="Total Backers"/>
               </div>
           </div>
@@ -153,7 +163,7 @@ const CampaignDetail = () => {
                         </div>
                         <div className="flex flex-col">
                             <span className="font-epilogue font-bold text-[20px] text-white">DONATORS</span>
-                            {project.isRefunded && donators?.length > 0 && <span className="my-2 text-white font-bold">All donations were refunded</span>}
+                            {project.isRefunded && donators?.length && <span className="my-2 text-white font-bold">All donations were refunded</span>}
                             {
                                 !donators?.length
                                   ?
@@ -180,7 +190,7 @@ const CampaignDetail = () => {
                         }
                     </div>
                   }
-                  {currentAccount === project.owner && project.status === 0 &&
+                  {currentAccount === project.owner && Number(project.status) === 0 &&
                     <div className="flex gap-3">
                     <button
                           className="relative inline-flex items-center justify-center rounded-md p-2 text-white bg-red-500"

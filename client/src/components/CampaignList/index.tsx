@@ -11,6 +11,9 @@ const CampaignList = () => {
     const [campaigns, setCampaigns] = useState(campaignsList)
 
     useEffect(() => {
+        if (!campaignsList) {
+          return
+        }
         if (search === "" || !search || search.length < 3) {
             setCampaigns(campaignsList)
             return

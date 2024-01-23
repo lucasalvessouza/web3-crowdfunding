@@ -11,7 +11,6 @@ import {
 import { contractABI, contractAddress } from "../utils/constants"
 import useEthAmountParser from "../hooks/useEthAmountParser";
 import useTimestampParser from "../hooks/useTimestampParser";
-import {WalletInstance} from "@thirdweb-dev/react-core/dist/declarations/src/core/types/wallet";
 
 type CrowdfundingProviderType = {
     currentAccount?: string
@@ -23,18 +22,18 @@ type CrowdfundingProviderType = {
     isLoading: boolean
     alertMessage?: AlertMessage
     setAlertMessage: (message: AlertMessage) => void,
-    userCampaignsList: CampaignType[] | []
-    campaignsList: CampaignType[] | []
+    userCampaignsList: CampaignType[] | [] | undefined
+    campaignsList: CampaignType[] | [] | undefined
     loadingPageMessage?: string,
     isProjectCreated: boolean,
     setIsProjectCreated: (value: boolean) => void,
-    getProject: (id: string) => CampaignType | undefined,
+    getProject: (id: string) => Promise<CampaignType | undefined>,
     contract: any,
-    donate: (id: number, amount: string) => void
-    getProjectDonators: (id: string) => any[],
-    deactivateProject: (id: string) => void,
+    donate: (id: number, amount: string) => Promise<void>
+    getProjectDonators: (id: string) => Promise<string[] | undefined>,
+    deactivateProject: (id: number) => Promise<void>,
     getUserProjects: () => void,
-    claimProject: () => void
+    claimProject: (id: number) => Promise<void>
 }
 
 type AlertMessage = {
@@ -48,18 +47,18 @@ export type CampaignCreateType = {
     title: string
     description: string
     target: string
-    deadline: string
+    deadline: any
     image: string
 }
 
 export type CampaignType = CampaignCreateType & {
     id: string
-    amountCollected: unknown
+    amountCollected: any
     donators: string[]
     donations: unknown[]
     status: string
     statusName: string
-    target: unknown
+    target: any
     canUserClaimFunds?: boolean
     isRefunded?: boolean
 }
@@ -76,13 +75,13 @@ export const CrowdfundingContext = createContext<CrowdfundingProviderType>({
     loadingPageMessage: undefined,
     setIsProjectCreated: () => undefined,
     isProjectCreated: false,
-    getProject: () => undefined,
+    getProject: () => new Promise(() => undefined),
     contract: undefined,
-    donate: () => undefined,
-    getProjectDonators: () => [],
-    deactivateProject: () => undefined,
-    getUserProjects: () => undefined,
-    claimProject: () => undefined
+    donate: () => new Promise(() => undefined),
+    getProjectDonators: () => new Promise(() => undefined),
+    deactivateProject: () => new Promise(() => undefined),
+    getUserProjects: () => new Promise(() => undefined),
+    claimProject: () => new Promise(() => undefined)
 })
 
 export const CrowdfundingProvider = ({ children }: { children: any }) => {
@@ -100,7 +99,6 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
     const currentAccount = useAddress();
     const balance = useBalance()
 
-    const [currentWallet, setCurrentWallet] = useState<WalletInstance>()
     const [walletBalance, setWalletBalance] = useState<string>()
     const [alertMessage, setAlertMessage] = useState<AlertMessage | undefined>()
     const [isWalletLoading, setIsWalletLoading] = useState(false)
@@ -125,8 +123,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
     const connectWallet = async () => {
         try {
             setIsWalletLoading(true)
-            const wallet = await connect(metamaskWallet())
-            setCurrentWallet(wallet)
+            await connect(metamaskWallet())
         } catch (error) {
             console.log(error)
             throw new Error("No ethereum object")
@@ -179,7 +176,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         }
     }
 
-    const formatCampaign = (campaign: CampaignType, index) => ({
+    const formatCampaign = (campaign: CampaignType, index: string) => ({
         id: campaign.id || index,
         owner: campaign.owner,
         title: campaign.title,
@@ -200,8 +197,8 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
                 return
             }
             setIsLoading(true)
-            const campaigns = await getCampaigns({});
-            const campaignsFormatted = campaigns.map(formatCampaign).filter(campaign => campaign.status === 0)
+            const campaigns = await getCampaigns({}) as any;
+            const campaignsFormatted = campaigns.map(formatCampaign).filter((campaign: CampaignType) => Number(campaign.status) === 0)
             setCampaignsList(campaignsFormatted)
         } catch (error) {
             console.log(error)
@@ -219,7 +216,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
                 return
             }
 
-            const campaigns = await getCampaigns({});
+            const campaigns = await getCampaigns({}) as any;
             if (!campaigns) {
                 return
             }
@@ -242,7 +239,7 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
             }
             const [campaign, canUserClaimFunds] = await getCampaign({
                 args: [id]
-            });
+            }) as any;
             if (!campaign) {
                 return
             }
@@ -251,8 +248,8 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
                 id,
                 canUserClaimFunds
             }
-            const [campaignFormatted] = [campaignWithId].map(formatCampaign)
-            return campaignFormatted
+            const [campaignFormatted] = [campaignWithId].map(formatCampaign as any)
+            return campaignFormatted as CampaignType
         } catch (error) {
             console.log(error)
             throw new Error("No campaign")
@@ -261,14 +258,14 @@ export const CrowdfundingProvider = ({ children }: { children: any }) => {
         }
     }
 
-    const getProjectDonators = async (id: string) => {
+    const getProjectDonators = async (id: string): Promise<string[] | undefined> => {
         try {
             if (!contract || !currentAccount) {
                 return
             }
             const donators = await getDonators({
                 args: [id]
-            });
+            }) as any;
             return Array.from(new Set(donators[0]))
         } catch (error) {
             console.log(error)
