@@ -58,7 +58,7 @@ const CampaignDetail = () => {
             return
         }
         donate(Number(project.id), donationValue)
-          .then(() => window.location.reload())
+          .then(() => navigate(0))
     }
 
     const submitDeactivateProject = () => {
