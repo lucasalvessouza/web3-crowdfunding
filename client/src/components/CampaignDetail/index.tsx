@@ -46,7 +46,6 @@ const CampaignDetail = () => {
             getProjectDonators(project.id)
               .then((donators: string[]) => setDonators(donators.map(donator => shortenAddress(donator))))
 
-            console.log()
             if (moment(project.deadline).diff(moment(), 'days') <= 0 && project.status === 0 && !project.canUserClaimFunds) {
                 setProjectShouldBeDeactivated(true)
             }
